@@ -22,5 +22,5 @@ if __name__ == '__main__':
     app = tornado.web.Application([(r'/app/', AppHandler)])
     http_server = tornado.httpserver.HTTPServer(app)
     http_server.bind(tornado.options.options.port)
-    http_server.start()
+    http_server.start(0)
     tornado.ioloop.IOLoop.current().start()
