@@ -3,19 +3,37 @@ import tornado.ioloop
 import tornado.httpserver
 from tornado.options import options, parse_command_line
 import json
-from client import http_post
+from multiprocessing import Manager, Pool, cpu_count
+from Producer import Producer
+from Customer import Customer
 parse_command_line()
 tornado.options.define("port", default=8888, type=int)
+
+
+def producer(q, data):
+    Producer.producer(q, data)
+
+
+def customer(q):
+    Customer.customer(q)
+
+
+# 队列
+Q = Manager().Queue()
+# 线程池
+process = Pool(processes=cpu_count())
+print(cpu_count())
+for i in range(cpu_count()):
+    process.apply_async(customer, args=(Q,))
 
 
 class AppHandler(tornado.web.RequestHandler):
     def post(self):
         try:
             data = json.loads(self.request.body.decode('utf-8'))
-            http_post(data)
+            producer(Q, data)
         except Exception as e:
             print(e)
-        # code = data["code"]
 
 
 if __name__ == '__main__':
@@ -24,3 +42,5 @@ if __name__ == '__main__':
     http_server.bind(tornado.options.options.port)
     http_server.start(0)
     tornado.ioloop.IOLoop.current().start()
+    process.close()
+    process.join()
