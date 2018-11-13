@@ -22,7 +22,6 @@ def customer(q):
 Q = Manager().Queue()
 # 线程池
 process = Pool(processes=cpu_count())
-print(cpu_count())
 for i in range(cpu_count()):
     process.apply_async(customer, args=(Q,))
 
