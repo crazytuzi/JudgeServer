@@ -6,10 +6,18 @@ import Utlis
 
 class Judge(object):
     languages = [
-        'C++',
-    ]
-    extensions = [
-        '.cpp',
+        [
+            'C',
+            '.c'
+        ],
+        [
+            'C++',
+            '.cpp'
+        ],
+        [
+            'Python',
+            '.py'
+        ]
     ]
     file_extensions = [
         '.in',
@@ -24,10 +32,10 @@ class Judge(object):
             self.problem_dir) if os.path.isfile(os.path.join(self.problem_dir, name))])
         self.file_len //= 2
         source_name = Utlis.answer_dir(
-        ) + str(self.data['id']) + self.extensions[0]
+        ) + str(self.data['id']) + self.languages[self.data['language']][1]
         self.writefile(source_name, self.data['code'])
         self.CFG = {
-            'language': self.languages[0],
+            'language': self.languages[self.data['language']][0],
             'source_name': source_name,
             'in_file': 'lll.in',
             'out_file': 'lll.out',
@@ -53,6 +61,7 @@ class Judge(object):
             self.CFG['in_file'] = in_file
             self.CFG['out_file'] = out_file
             self.CFG['ans_file'] = ans_file
+            print(self.CFG)
             res = self.JudgeOne(self.CFG)
             if res['status'] != 1:
                 self.RES = res
