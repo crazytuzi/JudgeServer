@@ -2,6 +2,17 @@ import requests
 import os
 import Judger
 import Utlis
+from subprocess import PIPE, run
+
+
+def output(command):
+    result = run(
+        command,
+        stdout=PIPE,
+        stderr=PIPE,
+        universal_newlines=True,
+        shell=True)
+    return result.stdout
 
 
 class Judge(object):
@@ -15,8 +26,16 @@ class Judge(object):
             '.cpp'
         ],
         [
-            'Python',
+            'Python2',
             '.py'
+        ],
+        [
+            'Python3',
+            '.py'
+        ],
+        [
+            'Java',
+            '.java'
         ]
     ]
     file_extensions = [
@@ -31,22 +50,38 @@ class Judge(object):
         self.file_len = len([name for name in os.listdir(
             self.problem_dir) if os.path.isfile(os.path.join(self.problem_dir, name))])
         self.file_len //= 2
+        # 都命名为Main，与Java统一
         source_name = Utlis.answer_dir(
-        ) + str(self.data['id']) + self.languages[self.data['language']][1]
+            self.data['id']) + "Main" + self.languages[self.data['language']][1]
+        output_name = Utlis.answer_dir(self.data['id']) + "main"
+        os.mkdir(Utlis.answer_dir(self.data['id']))
         self.writefile(source_name, self.data['code'])
-        self.CFG = {
-            'language': self.languages[self.data['language']][0],
-            'source_name': source_name,
-            'in_file': 'lll.in',
-            'out_file': 'lll.out',
-            'ans_file': 'lll.ans',
-            'time_limit': self.data['time_cost'],
-            'memory_limit': self.data['memory_cost'],
-            'compile option': ['-O2', '-lm', '-DONLINE_JUDGE']
-        }
+        if self.data['language'] == 0:
+            output("gcc %s -o %s" % (source_name, output_name))
+        elif self.data['language'] == 1:
+            output("g++ %s -o %s" % (source_name, output_name))
+        elif self.data['language'] == 4:
+            output("javac %s" % (source_name,))
+
         self.RES = {}
-        self.JudgeAll()
-        self.response()
+        if os.path.exists(output_name):
+            self.CFG = {
+                'language': self.languages[self.data['language']][0],
+                'source_name': output_name,
+                'in_file': 'lll.in',
+                'out_file': 'lll.out',
+                'ans_file': 'lll.ans',
+                'time_limit': self.data['time_cost'],
+                'memory_limit': self.data['memory_cost'],
+                'compile option': ['-O2', '-lm', '-DONLINE_JUDGE']
+            }
+            self.JudgeAll()
+            self.response()
+        else:
+            self.RES['status'] = 8  # COMPILE_ERROR
+            self.RES['use_time'] = 0
+            self.RES['use_memory'] = 0
+            self.response()
 
     def JudgeAll(self):
         max_use_time = -1
@@ -56,7 +91,7 @@ class Judge(object):
             in_file = self.problem_dir + str(i) + self.file_extensions[0]
             ans_file = self.problem_dir + str(i) + self.file_extensions[1]
             out_file = Utlis.answer_dir(
-            ) + str(self.data['id']) + '_' + str(i) + self.file_extensions[2]
+                self.data['id']) + "Main" + '_' + str(i) + self.file_extensions[2]
             self.writefile(out_file)
             self.CFG['in_file'] = in_file
             self.CFG['out_file'] = out_file
