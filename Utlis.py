@@ -9,8 +9,8 @@ def problem_dir(problem):
     return path[0][1] + str(problem) + '/'
 
 
-def answer_dir():
-    return path[1][1]
+def answer_dir(problem):
+    return path[1][1] + str(problem) + '/'
 
 
 def submission_url(submission):
