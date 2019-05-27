@@ -2,6 +2,7 @@ import requests
 import os
 import Judger
 import Utlis
+import time
 from subprocess import PIPE, run
 
 
@@ -51,10 +52,15 @@ class Judge(object):
             self.problem_dir) if os.path.isfile(os.path.join(self.problem_dir, name))])
         self.file_len //= 2
         # 都命名为Main，与Java统一
+        self.timestamp = int(time.time())
+
         source_name = Utlis.answer_dir(
-            self.data['id']) + "Main" + self.languages[self.data['language']][1]
-        output_name = Utlis.answer_dir(self.data['id']) + "main"
-        os.mkdir(Utlis.answer_dir(self.data['id']))
+            self.data['id'], self.timestamp) + "Main" + self.languages[self.data['language']][1]
+        output_name = Utlis.answer_dir(
+            self.data['id'], self.timestamp) + "Main"
+        if self.data['language'] == 4:
+            output_name = output_name + ".class"
+        os.mkdir(Utlis.answer_dir(self.data['id'], self.timestamp))
         self.writefile(source_name, self.data['code'])
         if self.data['language'] == 0:
             output("gcc %s -o %s" % (source_name, output_name))
@@ -62,18 +68,23 @@ class Judge(object):
             output("g++ %s -o %s" % (source_name, output_name))
         elif self.data['language'] == 4:
             output("javac %s" % (source_name,))
+        else:
+            output_name = source_name
+        if self.data['language'] == 4:
+            source_name = Utlis.answer_dir(self.data['id'], self.timestamp)
+        else:
+            source_name = output_name
 
         self.RES = {}
         if os.path.exists(output_name):
             self.CFG = {
                 'language': self.languages[self.data['language']][0],
-                'source_name': output_name,
+                'source_name': source_name,
                 'in_file': 'lll.in',
                 'out_file': 'lll.out',
                 'ans_file': 'lll.ans',
                 'time_limit': self.data['time_cost'],
                 'memory_limit': self.data['memory_cost'],
-                'compile option': ['-O2', '-lm', '-DONLINE_JUDGE']
             }
             self.JudgeAll()
             self.response()
@@ -91,12 +102,12 @@ class Judge(object):
             in_file = self.problem_dir + str(i) + self.file_extensions[0]
             ans_file = self.problem_dir + str(i) + self.file_extensions[1]
             out_file = Utlis.answer_dir(
-                self.data['id']) + "Main" + '_' + str(i) + self.file_extensions[2]
+                self.data['id'],
+                self.timestamp) + "Main" + '_' + str(i) + self.file_extensions[2]
             self.writefile(out_file)
             self.CFG['in_file'] = in_file
             self.CFG['out_file'] = out_file
             self.CFG['ans_file'] = ans_file
-            print(self.CFG)
             res = self.JudgeOne(self.CFG)
             if res['status'] != 1:
                 self.RES = res
